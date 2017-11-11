@@ -29,7 +29,7 @@ specifying your terraform working directory. If one is not passed, it uses the
 script's current directory for terraform. So be careful and pass one if needed.
 
 Example code:
-```
+```python
 import boto3
 from aws_terraform_import.modules.vpc import Vpc
 
@@ -37,5 +37,8 @@ session = boto3.Session(profile_name="myprofile", region_name="us-east-1")
 
 vpc = Vpc(session, cwd="/home/user/terraform/myproject")
 
+# This command will launch the process of import
+# all VPCs and their depend resources. No other
+# commands need to be run.
 vpc.import_vpcs()
 ```
