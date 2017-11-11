@@ -37,8 +37,9 @@ session = boto3.Session(profile_name="myprofile", region_name="us-east-1")
 
 vpc = Vpc(session, cwd="/home/user/terraform/myproject")
 
-# This command will launch the process of import
-# all VPCs and their depend resources. No other
-# commands need to be run.
+# This method call will launch the process of importing
+# all VPCs and their dependant resources. No other
+# method calls need to be made.
+
 vpc.import_vpcs()
 ```
