@@ -1,6 +1,6 @@
 # AWS Terraform Import - SNS Module
 
-The VPC module imports SNS resources into a Terraform state file
+The SNS module imports SNS resources into a Terraform state file
 
 ### Resources Imported
 The following resources are imported as of now
