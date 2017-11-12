@@ -27,11 +27,6 @@ class Sns:
         # Initialize the terraform class
         self.tf = Terraform(working_dir=self.cwd)
 
-    def base_config(self):
-        """Create main.tf config file if it does not exist"""
-
-        open('{}/main.tf'.format(self.cwd), 'a').close()
-
     def get_sns_name(self, arn):
         """Get the SNS name from ARN
            Terraform does not have an easy way of retrieving the name
@@ -91,9 +86,6 @@ class Sns:
 
         # Gather all resources
         arns = self.get_sns_arns()
-
-        # Create base file
-        self.base_config()
 
         # Create base config for each SNS Topic
         for arn in arns:
