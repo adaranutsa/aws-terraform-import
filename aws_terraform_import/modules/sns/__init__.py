@@ -1,5 +1,6 @@
 from python_terraform import *
 import os
+from glob import iglob
 
 
 class Sns:
@@ -47,13 +48,47 @@ class Sns:
            name var is a requirement for SNS module,
            therefore adding each topic as a separate config to main.tf with name
         """
+        # Get a list of all .tf files
+        configs = iglob("{}/*.tf".format(self.cwd), recursive=False)
 
-        with open('{}/main.tf'.format(self.cwd), 'a') as f:
-            f.write('module "sns_{}" '.format(name))
-            f.write('{\n')
-            f.write('source ="github.com/terraform-community-modules/tf_aws_sns"\n')
-            f.write('name="{}"\n'.format(name))
-            f.write('}')
+        # Store whether the config file for module vpc exists
+        config_exists = False
+
+        # Loop the tf config files
+        for config in configs:
+
+            # Open each config file
+            with open(config, 'r') as f:
+
+                # Read config file lines
+                data = f.readlines()
+
+                # Loop each config file line
+                for d in data:
+
+                    # Check if the vpc module exists
+                    if 'module "sns_{}"'.format(name) in d:
+
+                        # If the config exists, change the config_exists flag
+                        # to True and break out of the loop
+                        config_exists = True
+                        break
+
+            # If the config was found, break the loop
+            # so as not to waste time searching files
+            if config_exists:
+                break
+
+        # If the config file doesn't exist, append the
+        # config to the main.tf file
+        if not config_exists:
+
+            with open('{}/main.tf'.format(self.cwd), 'a') as f:
+                f.write('module "sns_{}" '.format(name))
+                f.write('{\n')
+                f.write('source ="github.com/terraform-community-modules/tf_aws_sns"\n')
+                f.write('name="{}"\n'.format(name))
+                f.write('}')
 
     def get_sns_arns(self):
         """Gather all SNS topics to be imported in terraform"""
@@ -98,5 +133,4 @@ class Sns:
         # Import all resources
         for arn in arns:
             self.import_resources("module.sns_{}.aws_sns_topic.t".format(self.get_sns_name(arn)), arn)
-
 
