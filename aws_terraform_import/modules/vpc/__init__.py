@@ -1,6 +1,8 @@
 from python_terraform import *
 import os
 from glob import iglob
+from .get_resources import GetResources
+import json
 
 class Vpc:
     """Import AWS VPC resources into terraform"""
@@ -15,6 +17,9 @@ class Vpc:
            of the script is used instead.
         """
         
+        # Store the boto3 session
+        self.session = session
+        
         # Create the boto3 client
         self.client = session.client('ec2')
         
@@ -27,7 +32,7 @@ class Vpc:
         # Initialize the terraform class 
         self.tf = Terraform(working_dir=self.cwd)
         
-    def base_config(self):
+    def base_config(self, num, vpc):
         """Check for a base vpc module configuration and
         create one if it doesn't exist.
         """
@@ -51,8 +56,8 @@ class Vpc:
                 for d in data:
                     
                     # Check if the vpc module exists
-                    if 'module "vpc"' in d:
-                        
+                    if 'module "vpc_{}"'.format(num) in d:
+
                         # If the config exists, change the config_exists flag
                         # to True and break out of the loop
                         config_exists = True
@@ -62,15 +67,22 @@ class Vpc:
             # so as not to waste time searching files
             if config_exists:
                 break
-            
+
         # If the config file doesn't exist, append the
         # config to the main.tf file
         if not config_exists:
             
             # Append the config to the main.tf file
             with open("{}/main.tf".format(self.cwd), 'a') as f:
-                f.write('\nmodule "vpc" {\n')
+                f.write('\nmodule "vpc_{}"\n'.format(num))
+                f.write('{\n')
                 f.write('    source = "github.com/adaranutsa/terraform-aws-vpc"\n')
+                f.write('name = "{}"\n'.format(vpc.name))
+                f.write('cidr = "{}"\n'.format(vpc.cidr))
+                f.write('azs = {}\n'.format(json.dumps(vpc.azs)))
+                f.write('public_subnets = {}\n'.format(json.dumps(vpc.public_subnets)))
+                f.write('enable_nat_gateway = {}\n'.format(str(vpc.enable_nat_gateway).lower()))
+                #f.write('enable_vpn_gateway = {}\n'.format(str(vpc.enable_vpn_gateway).lower()))
                 f.write('}\n')
     
     def init(self):
@@ -78,58 +90,6 @@ class Vpc:
         
         self.tf.init(capture_output=False, no_color=IsNotFlagged)
         
-    def get_vpcs(self):
-        """Gather all VPCs to be imported into terraform"""
-        
-        vpcs = self.client.describe_vpcs()
-        vpc_ids = []
-        
-        # Gather all the VPC ID's
-        for vpc in vpcs['Vpcs']:
-            vpc_ids.append(vpc['VpcId'])
-            
-        return vpc_ids
-            
-    def get_subnets(self):
-        """Gather all Subnets to be imported into terraform"""
-        
-        subnets = self.client.describe_subnets()
-        subnet_ids = []
-        
-        # Gather all the subnet ID's
-        for subnet in subnets['Subnets']:
-            subnet_ids.append(subnet['SubnetId'])
-            
-        return subnet_ids
-            
-    def get_route_tables(self):
-        """Gather all route tables to be imported into terraform"""
-        
-        route_tables = self.client.describe_route_tables()
-        route_table_ids = []
-        
-        # Gather all route table ID's
-        for rt in route_tables['RouteTables']:
-            
-            if 'SubnetId' not in rt['Associations'][0]:
-                # This route table has no subnet associations, ignore it
-                continue
-            
-            route_table_ids.append(rt['RouteTableId'])
-        
-        return route_table_ids
-            
-    def get_internet_gateways(self):
-        """Gather all internet gateways to be imported into terraform"""
-        
-        internet_gateways = self.client.describe_internet_gateways()
-        internet_gateway_ids = []
-        
-        # Gather all the gateway ID's        
-        for igw in internet_gateways['InternetGateways']:
-            internet_gateway_ids.append(igw['InternetGatewayId'])
-            
-        return internet_gateway_ids
     
     def import_resources(self, module, resources):
         """Import resources into terraform
@@ -166,23 +126,30 @@ class Vpc:
     def import_vpcs(self):
         """Execute terraform import operations"""
         
-        # Check to make sure configuration exists
-        self.base_config()
+        # Gather all the resources
+        resources = GetResources(self.session)
+        vpcs = resources.get_vpcs()
+        
+        # Check to make sure configuration exists for each VPC
+        count = 1
+        
+        # Create a VPC configuration for each VPC
+        for vpc in vpcs:
+            self.base_config(count, vpc)
+            count += 1
         
         # Initialize terraform resources
         self.init()
         
-        # Gather all the resources
-        vpcs = self.get_vpcs()
-        subnets = self.get_subnets()
-        route_tables = self.get_route_tables()
-        internet_gateways = self.get_internet_gateways()
-        
         # Import all resources
-        self.import_resources("module.vpc.aws_vpc.this", vpcs)
-        self.import_resources("module.vpc.aws_subnet.public", subnets)
-        self.import_resources("module.vpc.aws_route_table.public", route_tables)
-        self.import_resources("module.vpc.aws_internet_gateway.this", internet_gateways)
+        count = 1
+        for vpc in vpcs:
+            self.import_resources("module.vpc_{}.aws_vpc.this".format(count), [vpc.vpcid])
+            self.import_resources("module.vpc_{}.aws_subnet.public".format(count), vpc.subnet_ids)
+            self.import_resources("module.vpc_{}.aws_route_table.public".format(count), vpc.route_table_ids)
+            self.import_resources("module.vpc_{}.aws_internet_gateway.this".format(count), [vpc.internet_gateway_id])
+            
+            count += 1
         
-        
-        
+        # Format the terraform files
+        self.tf.fmt(diff=False)
