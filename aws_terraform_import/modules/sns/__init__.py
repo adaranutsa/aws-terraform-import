@@ -42,7 +42,7 @@ class Sns:
 
         self.tf.init(capture_output=False, no_color=IsNotFlagged)
 
-    def append_sns_topic(self, name):
+    def base_config(self, name):
         """Append topics to main.tf
            name var is a requirement for SNS module,
            therefore adding each topic as a separate config to main.tf with name
@@ -89,7 +89,7 @@ class Sns:
 
         # Create base config for each SNS Topic
         for arn in arns:
-            self.append_sns_topic(self.get_sns_name(arn))
+            self.base_config(self.get_sns_name(arn))
 
         # Initialize terraform resources
         self.init()
