@@ -59,7 +59,7 @@ class Sns:
             f.write('name="{}"\n'.format(name))
             f.write('}')
 
-    def get_sns_arns(selfs):
+    def get_sns_arns(self):
         """Gather all SNS topics to be imported in terraform"""
 
         arns = []
@@ -104,6 +104,6 @@ class Sns:
 
         # Import all resources
         for arn in arns:
-            self.import_resources("module.sns_{}.aws_sns_topic_t".format(self.get_sns_name(arn)), arn)
+            self.import_resources("module.sns_{}.aws_sns_topic.t".format(self.get_sns_name(arn)), arn)
 
 
