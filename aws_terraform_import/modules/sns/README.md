@@ -13,7 +13,7 @@ This module relies on the official Terraform VPC Module.
 [Terraform SNS Module](https://github.com/terraform-community-modules/tf_aws_sns)
 
 This means that each SNS Topic is imported into the following terraform configurations: `module "sns_<topic name>"`
-This module will create a new configuration for each SNS topic and add them to `main.tf` terraform file.
+This module will check if that configurations exist in your terraform directory and if not, it will create them and append to `main.tf` terraform file.
 
 ### Module Usage
 This module is intended to be used by the package. However, it can be used independantly as well
