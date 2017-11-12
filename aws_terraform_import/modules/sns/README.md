@@ -8,12 +8,13 @@ The following resources are imported as of now
 * All SNS Topics
 
 ### Dependencies
-This module relies on the official Terraform VPC Module.
+This module relies on the Community Terraform SNS  Module.
 
 [Terraform SNS Module](https://github.com/terraform-community-modules/tf_aws_sns)
 
-This means that each SNS Topic is imported into the following terraform configurations: `module "sns_<topic name>"`
-This module will check if that configurations exist in your terraform directory and if not, it will create them and append to `main.tf` terraform file.
+This means that each SNS Topic is imported into the following terraform configuration: `module "sns_<topic name>"`
+This module will check if configurations exist in your terraform directory and if not,
+it will create them and append to `main.tf` terraform file.
 
 ### Module Usage
 This module is intended to be used by the package. However, it can be used independantly as well
