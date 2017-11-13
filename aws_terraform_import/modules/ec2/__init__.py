@@ -1,11 +1,9 @@
 from python_terraform import *
 import os
 from glob import iglob
-from .get_resources import GetResources
-import json
 
-class Vpc:
-    """Import AWS VPC resources into terraform"""
+class Ec2:
+    """Import AWS EC2 instances into terraform"""
     
     def __init__(self, session, cwd = None):
         """Initilize the class with the boto3 client and terraform wrapper
@@ -16,9 +14,6 @@ class Vpc:
            If cwd is not specified, the current working directory
            of the script is used instead.
         """
-        
-        # Store the boto3 session
-        self.session = session
         
         # Create the boto3 client
         self.client = session.client('ec2')
@@ -32,8 +27,8 @@ class Vpc:
         # Initialize the terraform class 
         self.tf = Terraform(working_dir=self.cwd)
         
-    def base_config(self, num, vpc):
-        """Check for a base vpc module configuration and
+    def base_config(self):
+        """Check for a base ec2_instance module configuration and
         create one if it doesn't exist.
         """
         
@@ -56,8 +51,8 @@ class Vpc:
                 for d in data:
                     
                     # Check if the vpc module exists
-                    if 'module "vpc_{}"'.format(num) in d:
-
+                    if 'module "ec2_instance"' in d:
+                        
                         # If the config exists, change the config_exists flag
                         # to True and break out of the loop
                         config_exists = True
@@ -67,30 +62,35 @@ class Vpc:
             # so as not to waste time searching files
             if config_exists:
                 break
-
+            
         # If the config file doesn't exist, append the
         # config to the main.tf file
         if not config_exists:
             
             # Append the config to the main.tf file
             with open("{}/main.tf".format(self.cwd), 'a') as f:
-                f.write('\nmodule "vpc_{}"\n'.format(num))
-                f.write('{\n')
-                f.write('    source = "github.com/adaranutsa/terraform-aws-vpc"\n')
-                f.write('name = "{}"\n'.format(vpc.name))
-                f.write('cidr = "{}"\n'.format(vpc.cidr))
-                f.write('azs = {}\n'.format(json.dumps(vpc.azs)))
-                f.write('public_subnets = {}\n'.format(json.dumps(vpc.public_subnets)))
-                f.write('enable_nat_gateway = {}\n'.format(str(vpc.enable_nat_gateway).lower()))
-                #f.write('enable_vpn_gateway = {}\n'.format(str(vpc.enable_vpn_gateway).lower()))
+                f.write('\nmodule "ec2_instance" {\n')
+                f.write('    source = "github.com/adaranutsa/tf_aws_ec2_instance"\n')
                 f.write('}\n')
-    
+                
     def init(self):
         """Initialize the terraform resources"""
         
         self.tf.init(capture_output=False, no_color=IsNotFlagged)
         
-    
+    def get_ec2_instances(self):
+        """Gather all EC2 instances to be imported into terraform"""
+        
+        ec2_instances = self.client.describe_instances()['Reservations']
+        ec2_ids = []
+        
+        # Gather all EC2 ID's
+        for ec2 in ec2_instances:
+            for inst in ec2['Instances']:
+                ec2_ids.append(inst['InstanceId'])
+            
+        return ec2_ids
+        
     def import_resources(self, module, resources):
         """Import resources into terraform
         
@@ -122,34 +122,18 @@ class Vpc:
             
             # Increment the coutner
             count += 1
-    
-    def import_vpcs(self):
+            
+    def import_ec2_instances(self):
         """Execute terraform import operations"""
         
-        # Gather all the resources
-        resources = GetResources(self.session)
-        vpcs = resources.get_vpcs()
-        
-        # Check to make sure configuration exists for each VPC
-        count = 1
-        
-        # Create a VPC configuration for each VPC
-        for vpc in vpcs:
-            self.base_config(count, vpc)
-            count += 1
+        # Check to make sure configuration exists
+        self.base_config()
         
         # Initialize terraform resources
         self.init()
         
-        # Import all resources
-        count = 1
-        for vpc in vpcs:
-            self.import_resources("module.vpc_{}.aws_vpc.this".format(count), [vpc.vpcid])
-            self.import_resources("module.vpc_{}.aws_subnet.public".format(count), vpc.subnet_ids)
-            self.import_resources("module.vpc_{}.aws_route_table.public".format(count), vpc.route_table_ids)
-            self.import_resources("module.vpc_{}.aws_internet_gateway.this".format(count), [vpc.internet_gateway_id])
-            
-            count += 1
+        # Gather all ec2 resources
+        ec2s = self.get_ec2_instances()
         
-        # Format the terraform files
-        self.tf.fmt(diff=False)
+        # Import all resources
+        self.import_resources('module.aws_instance.ec2_instance.id', ec2s)
