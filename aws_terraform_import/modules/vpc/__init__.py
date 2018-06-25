@@ -20,11 +20,9 @@ class Vpc:
         of the script is used instead.
         """
         
-        # Store the boto3 session
         self.session = session
-        
-        # Create the boto3 client
         self.client = session.client('ec2')
+        self.cwd = cwd
            
         # Initialize the terraform class 
         self.tf = Terraform(working_dir=self.cwd)
