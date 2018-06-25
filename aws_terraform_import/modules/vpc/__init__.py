@@ -83,7 +83,7 @@ class Vpc:
                 f.write('azs = {}\n'.format(json.dumps(vpc.azs)))
                 f.write('public_subnets = {}\n'.format(json.dumps(vpc.public_subnets)))
                 f.write('enable_nat_gateway = {}\n'.format(str(vpc.enable_nat_gateway).lower()))
-                #f.write('enable_vpn_gateway = {}\n'.format(str(vpc.enable_vpn_gateway).lower()))
+                f.write('enable_vpn_gateway = {}\n'.format(str(vpc.enable_vpn_gateway).lower()))
                 f.write('}\n')
     
     def init(self):
