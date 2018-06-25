@@ -7,14 +7,17 @@ import json
 class Vpc:
     """Import AWS VPC resources into terraform"""
     
-    def __init__(self, session, cwd = None):
-        """Initilize the class with the boto3 client and terraform wrapper
+    def __init__(self, session, cwd = os.getcwd()):
+        """
+        Initilize the class with the boto3 client and terraform wrapper
         
-           session: boto3 session variabled. Required
-           cwd: Current working directory of the script. Optional.
-           
-           If cwd is not specified, the current working directory
-           of the script is used instead.
+        :parameter session: boto3 session variabled. Required
+        :type session: str
+        :parameter cwd: Current working directory of the script. Optional.
+        :type cwd: str
+        
+        If cwd is not specified, the current working directory
+        of the script is used instead.
         """
         
         # Store the boto3 session
@@ -22,12 +25,6 @@ class Vpc:
         
         # Create the boto3 client
         self.client = session.client('ec2')
-        
-        # If no cwd is specified, use current dir of script
-        if cwd == None:
-            self.cwd = os.getcwd()
-        else:
-            self.cwd = cwd
            
         # Initialize the terraform class 
         self.tf = Terraform(working_dir=self.cwd)
