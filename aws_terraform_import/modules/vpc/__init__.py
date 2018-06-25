@@ -28,8 +28,14 @@ class Vpc:
         self.tf = Terraform(working_dir=self.cwd)
         
     def base_config(self, num, vpc):
-        """Check for a base vpc module configuration and
+        """
+        Check for a base vpc module configuration and
         create one if it doesn't exist.
+
+        :parameter num: The number to indentify multiple VPCs
+        :type num: int
+        :parameter vpc: Boto3 VPC resource response
+        :type vpc: dict
         """
         
         # Get a list of all .tf files
@@ -87,10 +93,13 @@ class Vpc:
         
     
     def import_resources(self, module, resources):
-        """Import resources into terraform
+        """
+        Import resources into terraform
         
-           module: The terraform module this is being imported into
-           resources: List of resources to be imported
+        :parameter module: The name of the terraform module this is being imported into
+        :type module: str
+        :parameter resources: List of resources to be imported
+        :type resources: list
         """
         
         # Count name for keeping track of the number of 
