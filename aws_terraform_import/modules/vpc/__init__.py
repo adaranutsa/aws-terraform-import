@@ -77,7 +77,7 @@ class Vpc:
             with open("{}/main.tf".format(self.cwd), 'a') as f:
                 f.write('\nmodule "vpc_{}"\n'.format(num))
                 f.write('{\n')
-                f.write('    source = "github.com/adaranutsa/terraform-aws-vpc"\n')
+                f.write('    source = "github.com/terraform-aws-modules/terraform-aws-vpc"\n')
                 f.write('name = "{}"\n'.format(vpc.name))
                 f.write('cidr = "{}"\n'.format(vpc.cidr))
                 f.write('azs = {}\n'.format(json.dumps(vpc.azs)))
