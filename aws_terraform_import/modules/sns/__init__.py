@@ -86,7 +86,7 @@ class Sns:
             with open('{}/main.tf'.format(self.cwd), 'a') as f:
                 f.write('module "sns_{}" '.format(name))
                 f.write('{\n')
-                f.write('source ="github.com/terraform-community-modules/tf_aws_sns"\n')
+                f.write('source ="github.com/adaranutsa/tf_aws_sns"\n')
                 f.write('name="{}"\n'.format(name))
                 f.write('}')
 
