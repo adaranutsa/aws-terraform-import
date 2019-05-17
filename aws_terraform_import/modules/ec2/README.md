@@ -17,7 +17,7 @@ This module will check if that configuration exists in your terraform directory 
 create it and append it to `main.tf` terraform file.
 
 ### Module Usage
-This module is intended to be used by the package. However, it can be used independantly as well
+This module is intended to be used by the package. However, it can be used independently as well
 if you so choose. See below for usage instructions.
 
 The modules requires that a boto3 session be created and passed to the Vpc class.
